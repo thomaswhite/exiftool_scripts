@@ -2,5 +2,5 @@
 
 source exiftool-vars.sh
 
-exiftool -ext jpg -ext JPG ${exif_param_NAME_ONLY} '-'"${TAG_filename}"'<${FileModifyDate}'"${suffix}" '-'"${TAG_filename}"'<${CreateDate}'"${suffix}" '-'"${TAG_filename}"'<${DateTimeOriginal}'"${suffix}"  "${dir}"
+exiftool -ext jpg -ext JPG ${exif_param_NAME_ONLY} '-'"${TAG}"'<${FileModifyDate}'"${ms_camera_lens_ext}" '-'"${TAG}"'<${CreateDate}'"${ms_camera_lens_ext}" '-'"${TAG}"'<${DateTimeOriginal}'"${ms_camera_lens_ext}"  "${dir}"
 
