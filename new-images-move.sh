@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source exiftool-vars.sh
+source exiftool-common.sh
 
 images_root="${2:-/media/tom/4Tb_Seagate/Images/}"
 image_full_directory_name="${images_root}/${image_directory}/${image_name}"
