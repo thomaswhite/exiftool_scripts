@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# https://gist.github.com/cosimo/3760587
+OPTS=`getopt -o vhns: --long verbose,dry-run,help,stack-size: -n 'parse-options' -- "$@"`
+
+if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
+
+echo "$OPTS"
+eval set -- "$OPTS"
+
 set -e          # short for errexitmodifies the behavior of the shell that will exit whenever a command exits with a non zero status
 set -u          # this makes the shell to treat undefined variables as errors.
 set -o pipefail # the pipe will be considered successful if all the commands involved are executed without errors
@@ -28,7 +36,7 @@ rename=""
 new=""
 camera=""
 
-while getopts "rcmns:d:e:" opt; do
+while getopts "vrcmns:d:e:" opt; do
   case $opt in
     d)
       echo "debug mode" >&2
