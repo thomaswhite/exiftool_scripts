@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-source exiftool-common.sh
+source images.sh
 
 debug=1
