@@ -129,7 +129,7 @@ ms_file_siffix="${ms}${camera}${lens}"'%+c.%le'
 ms_file_siffix_xmp="${ms}${camera}${lens}"'%+c.nef.xmp'
 
 
-if [ ! "$extensions"  ] && [ ! "$xmp_flag" ];   then show_help ;  echo  ">>> Error: At least one file extension is required";  exit 1; fi
+if [ ! "$extensions"  ] && [ ! "$xmp_flag" ];   then show_help ;  echo  ">>> Error: At least one file extension is expected";  exit 1; fi
 if [ ! $move ] && [ ! $copy ] && [ ! $rename ]; then show_help ;  echo  ">>> Error: At least one operation is expected -rename, -copy or -move"; exit 1; fi
 if [   $move ] && [   $copy ];                  then show_help ;  echo  ">>> Error: Either -copy OR -move is expected"; exit 1; fi
 
@@ -149,13 +149,6 @@ print_parameters
 
 if [ $debug ]; then
    echo Debugging :-:-:-:-:-:-:-:-:-:-:-:-:-:-:
-   if [ "$extensions" ]; then
-       echo "exiftool ${extensions}  \ "
-       echo "      ${exif_param}  \ "
-       echo  "      -d ${name}  \ "
-       echo  "      ${dateExpr} \ "
-       echo  "      $sourceDir"
-   fi
 
    if [ "$xmp_flag" ]; then
        echo ' '
@@ -165,6 +158,15 @@ if [ $debug ]; then
        echo  "      ${dateExpr} \ "
        echo  "      $sourceDir"
    fi
+
+   if [ "$extensions" ]; then
+       echo "exiftool ${extensions}  \ "
+       echo "      ${exif_param}  \ "
+       echo  "      -d ${name}  \ "
+       echo  "      ${dateExpr} \ "
+       echo  "      $sourceDir"
+   fi
+
    echo ' '
    exit 0
 else
