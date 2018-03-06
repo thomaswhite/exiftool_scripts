@@ -9,9 +9,9 @@ set -o nounset
 
 unset -f header
 function header(){
-    echo "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
-    echo "$(basename $0) - an exiftool utility, by Thomas White"
-    echo "---------------------------------------------------------"
+    echo "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
+    echo "$(basename $0) - an exiftool utility wrapper, by Thomas White"
+    echo "---------------------------------------------------------------"
 }
 
 # Usage info
@@ -20,96 +20,66 @@ function show_help() {
  header
  cat << EOF
  Usage: $(basename $0) [<options>] -e extension [-s source-directory] [--imagesRoot images-root-directory]" # ${0##*/}
+   -n | --newimages   new images: copy and rename
+   -r | --rename      rename images in place YYYY-MM-DD_HH-MM-SS.msec_<camera>_<lens>.<ext>
+   -m | --move        move images to <root_image_dir>/<ext>/YYYY/MM/YYYY-MM-DD
+   -c | --copy        copy images to <root_image_dir>/<ext>/YYYY/MM/YYYY-MM-DD
    -e | --ext         file extension, required ${1:-}
    -s | --sourceDir   image directory to be processed
-        --imagesRoot  root image directory
-        --debug       debug mode
-   -n | --newimages   new images: copy and rename
-   -r | --rename      rename images in place yyyy-mm-dd_hh-mm-ss.msec_<camera>_<lens>
-   -m | --move        move the images to the datetime directory structure root_image_dir/ext/yyyy/mm/yyyy-mm-dd
-   -c | --copy        copy images to root_image_dir/ext/yyyy/mm/yyyy-mm-dd
    -? | -h
+        --imagesRoot  root image directory
+        --debug       display the commands without executing
+        --dryrun      use TestName instead of FileName for file rename
+---
 EOF
 }
 
 unset -f print_parameters
 print_parameters(){
     header
-    if [ "$dryrun" ]; then echo " dry run               : ON, debug, rename, tag=TestName" ; fi
-    if [ "$debug" ];  then echo " debugging             : $debug "; fi
-    echo " file tag used         : $TAG";
-    echo " images with extensions:$extensions"
-    echo " located in and under  : ${sourceDir}"
-    if [ "$rename" ]; then  echo " will be renamed to    : $image_name"'_<camera>_<lens>.<ext>'; fi
-    if   [ "$move" ]; then  echo " will be moved to      : $imagesRoot/$image_directory";
-    elif [ "$copy" ]; then  echo " will be copied to     : $imagesRoot/$image_directory ";  fi
-    echo "=== "
+    if [ "$dryrun" ]; then echo " dry run                  : yes, debug, tag=TestName" ; fi
+    echo " images root              : $imagesRoot"
+    echo " images with extensions   : $xmp_flag $extensions"
+    echo " located in and under     : ${sourceDir}"
+    if   [ "$move" ]; then echo " will be moved to         : $imagesRoot/$image_directory";
+    elif [ "$copy" ]; then echo " will be copied to        : $imagesRoot/$image_directory ";  fi
+    if [ "$rename" ]; then echo " will be renamed to       : $image_name"'_<camera>_<lens>.<ext>'; fi
+    if [ "$xmp_flag" ]; then echo " xmp_flag                 : $xmp_flag"; fi
+    echo "- "
+#    echo  " exif_param               : $exif_param"
+#    echo  " name                     : $name"
 }
 
-# pass a tag in $1
+# pass a tag in $1, suffux in $2
 unset -f make_date_tags
 function make_date_tags(){
-   echo '-'${1}'<${FileModifyDate}'"${ms_camera_lens_ext}" '-'${1}'<${CreateDate}'"${ms_camera_lens_ext}" '-'${1}'<${DateTimeOriginal}'"${ms_camera_lens_ext}"
+   echo '-'${1}'<${FileModifyDate}'"${2}" '-'${1}'<${CreateDate}'"${2}" '-'${1}'<${DateTimeOriginal}'"${2}"
+   # echo '-'${1}'<${DateTimeOriginal}'"${2}"
 }
-
-#exif_rename  ${exit_param}, "-d ${image_name}"
-unset -f exif_rename
-function exif_move_rename(){
-  local dateExpr=''
-  if( $debug == 1 ); then
-     dateExpr = ${make_date_tags TestName }
-  else
-     dateExpr = ${make_date_tags FileName }
-  fi
-  exiftool ${extensions} ${exif_param} -d ${image_full_directory_name} ${dateExpr} "$sourceDir"
-}
-
-unset -f exif_rename
-function exif_rename(){
-  local dateExpr=''
-  if( $debug == 1 ); then
-     dateExpr = ${make_date_tags TestName }
-  else
-     dateExpr = ${make_date_tags FileName }
-  fi
-  exiftool ${extensions} ${exif_param} -d ${image_name} ${dateExpr} "$sourceDir"
-}
-
-#exif_move 'jpg', ${exit_param}, "-d ${image_full_directory}"
-unset -f exif_move
-function exif_move(){
-  local  dateExpr = ${make_date_tags directory }
-  exiftool ${extensions} ${exif_param} -d ${image_full_directory}  ${dateExpr}  "$sourceDir"
-}
-
-ms='${SubSectimeOriginal;$_.=0x(3-length);s/$_/.$_/}' # TODO: if the msec are missing defaults to an empty string
-ms2='${SubSectimeOriginal;$_.=0x(3-length);s/$_/( length > 0 ? '.':'')$_/}' # TODO: if the msec are missing defaults to an empty string
-
-camera='${Model;s/EOS//;s/910G/910F/;s/920G/910F/;s/PowerShot//;s/DIGITAL //;s/ IS//;tr/ /_/;s/__+/_/g;s/$_/__$_/}'
-lens='${LensID;s/ f\/.*$//;s/ DC HSM//;s/AF-S DX VR Zoom-//;tr/ /_/;s/$_/~~$_/;s/Unknown_17-35mm/Canon_EF_17-35mm/;s/Unknown_35-350mm/Canon_EF_35-350mm/;s/Unknown_28-70mm/Canon_EF_28-70mm/;s/Canon_G10~~Unknown_/Canon_G10~~/}'
-camera_lens_ext="${camera}${lens}"'%+c.%le'
-
-exif_param=" -m -r -progress "
-image_name="%Y-%m-%d_%H-%M-%S"
-image_directory='%%le/%Y/%m/%Y-%m-%d'
 
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
+sourceDir="$SCRIPTPATH"
 imagesRoot=${IMAGES_ROOT:-}
 imagesRoot=${imagesRoot:-/media/tom/4Tb_Seagate/Images}
+exif_param=" -m -r -progress "
 
 debug=''
 dryrun=''
 TAG=FileName
-exif_extra_params=''
 extensions=''
 copy=""
 move=""
 rename=""
 new=""
-sourceDir="$SCRIPTPATH"
+extra_param=''
+xmp_flag=''
+xmp_extra_param=''
 
-# >>> getopt
-SHORT=hnrmce:s:d:
+name=''
+dateExpr=''
+
+# >>> getopt -----------
+SHORT=hnrmce:d:
 LONG=dryrun,copy,help,debug,new,move,camera,ext:,sourceDir:,imagesRoot:
 
 # read the options
@@ -120,14 +90,21 @@ eval set -- "$OPTS"
 
 while true; do
   case $1 in
-    -e | --ext       )  extensions="$extensions -ext ${2,,} -ext ${2^^}"; shift 2 ;;
+    -e | --ext       )
+         if [ ${2,,} = "xmp" ]; then
+           xmp_flag="-ext ${2,,} -ext ${2^^} "
+           xmp_extra_param=" -tagsfromfile %d%f -overwrite_original "
+         else
+           extensions="$extensions -ext ${2,,} -ext ${2^^}";
+         fi
+        shift 2 ;;
     -s | --sourceDir )  sourceDir="${2}";            shift 2 ;;
-    -d | --imagesRoot)  imagesRoot="${2}";           shift 2 ;;
-         --debug     )  debug='yes'; TAG=TestName;   shift ;;
-         --dryrun    )  debug='yes'; dryrun=yes; TAG=TestName; rename=yes;   shift ;;
+         --imagesRoot)  imagesRoot="${2}";           shift 2 ;;
+         --debug     )  debug=yes;                   shift ;;
+         --dryrun    )  dryrun=yes; TAG=TestName;    shift ;;
     -n | --newimages )  new=yes;                     shift  ;;
     -r | --rename    )  rename=yes;                  shift ;;
-    -m | --move      )  move=yes;                    shift ;;
+    -m | --move      )  move=yes;  exif_param="$exif_param -o "; shift ;;
     -c | --copy      )  copy=yes;                    shift;;
     -h | --help      )  show_help;                   shift ;     exit 1 ;;
     --               )                               shift;      break ;;
@@ -135,24 +112,70 @@ while true; do
   esac
 done
 shift "$(($OPTIND -1))"
-# getopt <<<
+# getopt <<< --------------
+
+ms='${SubSectimeOriginal;$_.=0x(3-length);s/$_/.$_/}' # TODO: if the msec are missing defaults to an empty string
+ms2='${SubSectimeOriginal;$_.=0x(3-length);s/$_/( length > 0 ? '.':'')$_/}' # TODO: if the msec are missing defaults to an empty string
+
+camera='${Model;s/EOS//;s/910G/910F/;s/920G/910F/;s/PowerShot//;s/DIGITAL //;s/ IS//;tr/ /_/;s/__+/_/g;s/$_/__$_/}'
+lens='${LensID;s/ f\/.*$//;s/ DC HSM//;s/AF-S DX VR Zoom-//;tr/ /_/;s/$_/~~$_/;s/Unknown_17-35mm/Canon_EF_17-35mm/;s/Unknown_35-350mm/Canon_EF_35-350mm/;s/Unknown_28-70mm/Canon_EF_28-70mm/;s/Canon_G10~~Unknown_/Canon_G10~~/}'
+
+image_name="%Y-%m-%d_%H-%M-%S"
+image_directory='%%le/%Y/%m/%Y-%m-%d'
+image_full_directory="${imagesRoot}/${image_directory}"
+
+file_siffix="${camera}${lens}"'%+c.%le'
+ms_file_siffix="${ms}${camera}${lens}"'%+c.%le'
+ms_file_siffix_xmp="${ms}${camera}${lens}"'%+c.nef.xmp'
 
 
-if [ ! "$extensions"  ]; then show_help ;  echo  "Error: At least one file extension is required"; exit 1; fi
+if [ ! "$extensions"  ] && [ ! "$xmp_flag" ];   then show_help ;  echo  ">>> Error: At least one file extension is required";  exit 1; fi
+if [ ! $move ] && [ ! $copy ] && [ ! $rename ]; then show_help ;  echo  ">>> Error: At least one operation is expected -rename, -copy or -move"; exit 1; fi
+if [   $move ] && [   $copy ];                  then show_help ;  echo  ">>> Error: Either -copy OR -move is expected"; exit 1; fi
+
+
+if [ $rename ]; then
+   dateExpr=$(make_date_tags $TAG $ms_file_siffix)
+   name=$image_name
+   if [  $move ] || [ $copy ]; then
+       name="$image_full_directory/$image_name"
+   fi
+elif [  $move ] || [ $copy ]; then
+   name="$image_full_directory"'/$f'
+   dateExpr=$(make_date_tags 'directory' '' )
+fi
 
 print_parameters
 
-ms_camera_lens_ext="${ms}${camera}${lens}"'%+c.%le'
-ms_camera_lens_ext_xmp="${ms}${camera}${lens}"'%+c.nef.xmp'
+if [ $debug ]; then
+   echo Debugging :-:-:-:-:-:-:-:-:-:-:-:-:-:-:
+   if [ "$extensions" ]; then
+       echo "exiftool ${extensions}  \ "
+       echo "      ${exif_param}  \ "
+       echo  "      -d ${name}  \ "
+       echo  "      ${dateExpr} \ "
+       echo  "      $sourceDir"
+   fi
 
-image_full_directory="${imagesRoot}/${image_directory}"
-image_full_directory_name="${imagesRoot}/${image_directory}/${image_name}"
+   if [ "$xmp_flag" ]; then
+       echo ' '
+       echo "exiftool ${xmp_flag}  \ "
+       echo  "     ${xmp_extra_param} ${exif_param}  \ "
+       echo  "      -d ${name}  \ "
+       echo  "      ${dateExpr} \ "
+       echo  "      $sourceDir"
+   fi
+   echo ' '
+   exit 0
+else
+   echo "Execution:"
+   echo  exiftool ${extensions} ${exif_param} -d "${name}"  ${dateExpr}    "$sourceDir"
 
-exif_param="$exif_extra_params -m -r -progress "
-exif_param_NAME_ONLY="-m -r -progress -d ${image_name}"
-exif_param_FULL_PATH="-m -r -progress -d ${image_full_directory_name}"
+fi
 
-exit 1
+
+exit 0
+
 
 
 ## camera defines: file extensions, extra params
@@ -167,16 +190,5 @@ exit 1
 #   crw/_crw
 #   nef/xmp
 #   jpg
-
-## command:
-#   copy      exif_extra_params=" ${exif_extra_params} -o "
-#   rename
-#   move
-
-dir=${1:-.}
-#TAG="${3:-FileName}"    #  TestName
-TAG="TestName"
-# exiftool -ext crw -ext CRW  ${exif_param_NAME_ONLY}  '-'"${TAG}"'<${DateTimeOriginal}'"${camera_lens_ext}"  $sourceDir
-# ext exif_param
 
 
